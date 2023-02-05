@@ -1,0 +1,67 @@
+#! /usr/bin/env python3
+"""
+Generate add user on linux systems
+"""
+from __future__ import print_function
+import mysql.connector
+from mysql.connector import errorcode
+#import argparse
+
+#arg_parser  = argparse.ArgumentParser(description=__doc__)
+
+# We parse the args here to do some additional
+# obscure checks
+#parsed_args = arg_parser.parse_args()
+#remote_user = parsed_args.remote_user
+
+#DB_NAME = 'employees'
+
+#cnx = mysql.connector.connect(user='db_user',password='db_user_pass',port='6033', database='app_db')
+#cnx = mysql.connector.connect(user='db_user',password='db_user_pass',port='6033' )
+cnx = mysql.connector.connect(user='root',host="localhost" ,password='devdb',port='6033',database='app_db',auth_plugin='mysql_native_password' )
+#cnx = mysql.connector.connect(user='db_user',host="localhost" ,password='db_user_password',port='6033',database='app_db',auth_plugin='mysql_native_password' )
+
+cursor = cnx.cursor()
+
+
+#DB_NAME = 'app_db'
+
+#tables = {}
+#tables['app_db'] = (
+#    "create table `servers` ("
+#    "  `name` varchar(255),"
+#    "  `ipaddr` int,"
+#    "  `ram` int,"
+#    "  `cpu` int,"
+#    ") engine=innodb")
+
+cursor.execute("SHOW TABLES")
+
+for x in cursor:
+  print(x) 
+
+tables = (
+    "CREATE TABLE `servers` ("
+    "  `name` varchar(255),"
+    "  `ipaddr` int,"
+    "  `ram` int,"
+    "  `cpu` int,"
+    ") engine=innodb")
+
+try:
+  #cursor.execute ("CREATE TABLE servers (name VARCHAR(255), ipaddr int, ram int, cpu int)")
+  cursor.execute ("CREATE TABLE servers (name VARCHAR(255), ipaddr VARCHAR(255), ram int, cpu int)")
+except:
+  print("tables exist") 
+
+
+sql = "INSERT INTO servers (name, ipaddr, ram, cpu) VALUES (%s, %s, %s, %s)"
+val = ("hf-test1", "10.31.22.57", "1024", "2")
+cursor.execute(sql, val)
+
+cursor.commit()
+
+print(cursor.rowcount, "record inserted.")
+
+cursor.close()
+cnx.close()
