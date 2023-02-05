@@ -102,16 +102,6 @@ data_servers = (
   '1',
 )
 
-data_servers2 = (
-  'hf-test2',
-  'no.habbfarm.net',
-  '10.31.22.60',
-  'test',
-  '22',
-  '1024',
-  '2',
-)
-
 cursor.execute(add_servers, data_servers)
 
 # Make sure data is committed to the database
