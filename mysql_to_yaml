@@ -14,54 +14,108 @@ from mysql.connector import errorcode
 #parsed_args = arg_parser.parse_args()
 #remote_user = parsed_args.remote_user
 
-#DB_NAME = 'employees'
 
-#cnx = mysql.connector.connect(user='db_user',password='db_user_pass',port='6033', database='app_db')
+
+cnx = mysql.connector.connect(user='db_user',password='db_user_pass',port='6033', database='app_db')
 #cnx = mysql.connector.connect(user='db_user',password='db_user_pass',port='6033' )
-cnx = mysql.connector.connect(user='root',host="localhost" ,password='devdb',port='6033',database='app_db',auth_plugin='mysql_native_password' )
+#cnx = mysql.connector.connect(user='root',host="localhost" ,password='devdb',port='6033',database='app_db',auth_plugin='mysql_native_password' )
 #cnx = mysql.connector.connect(user='db_user',host="localhost" ,password='db_user_password',port='6033',database='app_db',auth_plugin='mysql_native_password' )
 
 cursor = cnx.cursor()
 
+DB_NAME = 'app_db'
 
-#DB_NAME = 'app_db'
-
-#tables = {}
-#tables['app_db'] = (
-#    "create table `servers` ("
-#    "  `name` varchar(255),"
-#    "  `ipaddr` int,"
-#    "  `ram` int,"
-#    "  `cpu` int,"
-#    ") engine=innodb")
-
-cursor.execute("SHOW TABLES")
-
-for x in cursor:
-  print(x) 
-
-tables = (
+TABLES = {}
+TABLES['servers'] = (
     "CREATE TABLE `servers` ("
     "  `name` varchar(255),"
-    "  `ipaddr` int,"
+    "  `domain` varchar(255),"
+    "  `ipaddr` varchar(255),"
+    "  `vlan_name` varchar(255),"
+    "  `vlanid` int,"
     "  `ram` int,"
-    "  `cpu` int,"
-    ") engine=innodb")
+    "  `cpu` int"
+    ") ENGINE=InnoDB")
+
+def create_database(cursor):
+    try:
+        cursor.execute(
+            "CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(DB_NAME))
+    except mysql.connector.Error as err:
+        print("Failed creating database: {}".format(err))
+        exit(1)
 
 try:
-  #cursor.execute ("CREATE TABLE servers (name VARCHAR(255), ipaddr int, ram int, cpu int)")
-  cursor.execute ("CREATE TABLE servers (name VARCHAR(255), ipaddr VARCHAR(255), ram int, cpu int)")
-except:
-  print("tables exist") 
+    cursor.execute("USE {}".format(DB_NAME))
+except mysql.connector.Error as err:
+    print("Database {} does not exists.".format(DB_NAME))
+    if err.errno == errorcode.ER_BAD_DB_ERROR:
+        create_database(cursor)
+        print("Database {} created successfully.".format(DB_NAME))
+        cnx.database = DB_NAME
+    else:
+        print(err)
+        exit(1)
+
+for table_name in TABLES:
+    table_description = TABLES[table_name]
+    try:
+        print("Creating table {}: ".format(table_name), end='')
+        cursor.execute(table_description)
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
+            print("already exists.")
+        else:
+            print(err.msg)
+    else:
+        print("OK")
+
+#cursor.close()
+#cnx.close()
+
+              #"VALUES (%(name)s, %(domain)s, %(ipaddr)s, %(vlan_name)s, %(vlanid)s,%(ram)s,%(cpu)s)")
 
 
-sql = "INSERT INTO servers (name, ipaddr, ram, cpu) VALUES (%s, %s, %s, %s)"
-val = ("hf-test1", "10.31.22.57", "1024", "2")
-cursor.execute(sql, val)
+# insert data to database
+add_servers = ("INSERT INTO servers "
+              "(name, domain, ipaddr, vlan_name, vlanid, ram, cpu) VALUES"
+              "(%s, %s, %s, %s, %s, %s, %s)")
 
-cursor.commit()
+# Insert salary information
+#data_servers = {
+#  'name': 'hf-test1',
+#  'domain': 'no.habbfarm.net',
+#  'ipaddr': '10.31.22.59',
+#  'vlan_name': 'test',
+#  'vlanid': '22',
+#  'ram': '1024',
+#  'cpu': '1',
+#}
 
-print(cursor.rowcount, "record inserted.")
+data_servers = (
+  'hf-test1',
+  'no.habbfarm.net',
+  '10.31.22.59',
+  'test',
+  '22',
+  '1024',
+  '1',
+)
+
+data_servers2 = (
+  'hf-test2',
+  'no.habbfarm.net',
+  '10.31.22.60',
+  'test',
+  '22',
+  '1024',
+  '2',
+)
+
+cursor.execute(add_servers, data_servers)
+
+# Make sure data is committed to the database
+cnx.commit()
 
 cursor.close()
 cnx.close()
