@@ -6,11 +6,11 @@ services:
     #command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: devdb
-      MYSQL_DATABASE: app_db
+      MYSQL_DATABASE: infra
       MYSQL_USER: db_user
       MYSQL_PASSWORD: db_user_pass
     ports:
-      - "6033:3306"
+      - "3306:3306"
     volumes:
       - dbdata:/var/lib/mysql
       #- ./mysql/:/etc/mysql
