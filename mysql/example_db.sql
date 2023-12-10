@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS `host_vars`;
 CREATE TABLE `host_vars` (
   `id` int NOT NULL AUTO_INCREMENT,
   `id_hosts` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `id_hosts` (`id_hosts`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -19,8 +20,25 @@ DROP TABLE IF EXISTS `hostgroup`;
 CREATE TABLE `hostgroup` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_index` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Table structure for table `cluster`
+--
+
+
+DROP TABLE IF EXISTS `cluster`;
+CREATE TABLE `cluster` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `virt_hosts` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT  NULL,
+  `cluster_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT  NULL,
+  `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `virt_hosts_index` (`virt_hosts`),
+  UNIQUE KEY `cluster_name_index` (`cluster_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -49,6 +67,7 @@ CREATE TABLE `interface` (
   `ip` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `id_hosts` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `id_vlan` int DEFAULT NULL,
+  `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `id_vlan` (`id_vlan`),
   KEY `id_server` (`id_hosts`)
