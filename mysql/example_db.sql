@@ -33,7 +33,7 @@ CREATE TABLE `hostgroup` (
 DROP TABLE IF EXISTS `cluster`;
 CREATE TABLE `cluster` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `virt_hosts` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT  NULL,
+  `virt_host` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT  NULL,
   `cluster_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT  NULL,
   `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
