@@ -37,7 +37,7 @@ CREATE TABLE `cluster` (
   `cluster_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT  NULL,
   `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `virt_hosts_index` (`virt_hosts`),
+  UNIQUE KEY `virt_host_index` (`virt_host`),
   UNIQUE KEY `cluster_name_index` (`cluster_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
