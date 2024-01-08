@@ -88,7 +88,7 @@ CREATE TABLE `vlan` (
   `state` enum('new','present','absent') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `cidr_index` (`cidr`),
+  UNIQUE KEY `cidr_index` (`prefix`),
   UNIQUE KEY `vlanid_index` (`vlanid`),
   KEY `vlan_index` (`vlan`)
 ) ENGINE=InnoDB AUTO_INCREMENT=427 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
