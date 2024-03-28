@@ -4,51 +4,37 @@ Generate add user on linux systems
 """
 from __future__ import print_function
 import argparse
-#import os
-#import subprocess
-import sys
 import getpass
-import paramiko
+import crypt
+from fabric2 import Connection
 
 arg_parser  = argparse.ArgumentParser(description=__doc__)
-arg_parser.add_argument("-ru", "--remote_user", help="remote user for login to server",required=True)
-arg_parser.add_argument("-u", "--user", help="user to add or remove ",required=False)
-arg_parser.add_argument("-s", "--server", help="server to manage users",required=True)
-arg_parser.add_argument("-nsp", "--no_sudo_password", action='store_true', help="if you dont need sudo password to run command",required=False)
+arg_parser.add_argument("--user", help="remote user for login to server",required=True)
+arg_parser.add_argument("--useradd", help="user to add or remove",required=False)
+arg_parser.add_argument("--server", help="server to manage users",required=True)
 
 # We parse the args here to do some additional
 # obscure checks
 parsed_args = arg_parser.parse_args()
-remote_user = parsed_args.remote_user
 user = parsed_args.user
+useradd = parsed_args.useradd
 server = parsed_args.server
 
 
-if not parsed_args.no_sudo_password:
-  print("sudo password")
-  server_pass = getpass.getpass()
+c = Connection(f'{user}@{server}')
+try:
+  #c.run(f"sudo useradd --create-home --groups wheel --shell /bin/bash {useradd}  ")
+  c.run(f"sudo useradd --create-home  --shell /bin/bash {useradd}  ")
+  c.run(f"sudo mkdir -p  /home/{useradd}/.ssh" )
+  c.run(f"sudo chmod 700 /home/{useradd}/.ssh")
+  c.sudo(f"curl https://github.com/{useradd}.keys > /tmp/{useradd}_authorized_keys")
+  c.run(f"sudo cp -r /tmp/{useradd}_authorized_keys /home/{useradd}/.ssh/authorized_keys")
+  c.run(f"sudo chmod 644 /home/{useradd}/.ssh/authorized_keys")
+  c.run(f"sudo chown -R {useradd}:{useradd} /home/{useradd}/.ssh/")
+  c.run(f"sudo  echo '{useradd}  ALL=(ALL)       NOPASSWD: ALL' > /tmp/00_{useradd}")
+  c.run(f"sudo  mv /tmp/00_{useradd} /etc/sudoers.d/00_{useradd}")
+  c.run(f"sudo chmod 0440 /etc/sudoers.d/00_{useradd}")
+  c.run(f"sudo chown -R root:root /etc/sudoers.d/00_{useradd}")
+except:
+  print("user exist")
 
-
-
-ssh = paramiko.client.SSHClient()
-ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect(f'{server}', username=f'{remote_user}')
-session = ssh.get_transport().open_session()
-session.set_combine_stderr(True)
-session.get_pty()
-
-# with sudo password
-if not parsed_args.no_sudo_password:
-  sessiohn.exec_command(f"sudo bash -c  useradd --create-home --shell /bin/bash {user}")
-  stdin = session.makefile('wb', -1)
-  stdout = session.makefile('rb', -1)
-  stdin.write(f'{server_pass}' + '\n')
-  stdin.flush()
-# no sudo password
-else:
-  session.exec_command(f"sudo bash -c  useradd --create-home --shell /bin/bash {user}")
-  stdin = session.makefile('wb', -1)
-  stdout = session.makefile('rb', -1)
-  stdin.flush()
-print(stdout.read().decode("utf-8"))
-ssh.close()
