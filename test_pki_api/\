@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+
+from typing import Union
+
+from fastapi import FastAPI
+from pydantic import BaseModel
+import base64
+
+app = FastAPI()
+
+
+@app.post("/")
+def pki_voucher():
+    base64_bytes = base64.b64encode(sample_string_bytes)
+    return base64_bytes
+
+
+#@app.get("/items/{item_id}")
+#def read_item(item_id: int, q: Union[str, None] = None):
+#    return {"item_id": item_id, "q": q}
+
+
+ 
+if __name__ == "__main__":
+    import uvicorn
+ 
+    uvicorn.run(app, host="127.0.0.1", port=8000)
