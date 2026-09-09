@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+import imaplib
+import email
+from email.header import decode_header
+import os
+from typing import Union
+from datetime import datetime
+
+# Email credentials
+EMAIL = "your_email@example.com"
+PASSWORD = "your_password_or_app_password"
+SERVER = "imap.gmail.com"  # Replace with your email provider's IMAP server
+
+# Base directory to save PDF attachments
+BASE_DIR = "pdf_attachments"
+os.makedirs(BASE_DIR, exist_ok=True)
+
+def clean_text(text: Union[str, bytes]) -> str:
+    """Decode and clean text for filenames."""
+    if isinstance(text, bytes):
+        try:
+            text = text.decode("utf-8")
+        except UnicodeDecodeError:
+            try:
+                text = text.decode("latin-1")
+            except UnicodeDecodeError:
+                text = text.decode("ascii", errors="ignore")
+    return "".join(
+        c if c.isalnum() else "_" for c in text
+    ).strip("_")
+
+def get_email_date(email_message):
+    """Extract the date from the email headers."""
+    date_str = email_message.get("Date")
+    if not date_str:
+        return None
+
+    # Parse the date string into a datetime object
+    try:
+        date_tuple = email.utils.parsedate_tz(date_str)
+        if date_tuple:
+            return datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
+    except (TypeError, ValueError):
+        pass
+    return None
+
+def download_pdf_attachments():
+    # Connect to the IMAP server
+    mail = imaplib.IMAP4_SSL(SERVER)
+    mail.login(EMAIL, PASSWORD)
+    mail.select("inbox")  # Select the mailbox (e.g., "inbox")
+
+    # Search for all emails
+    status, messages = mail.search(None, "ALL")
+    if status != "OK":
+        print("No messages found!")
+        return
+
+    email_ids = messages[0].split()
+    for email_id in email_ids:
+        # Fetch the email
+        status, msg_data = mail.fetch(email_id, "(RFC822)")
+        if status != "OK":
+            continue
+
+        raw_email = msg_data[0][1]
+        email_message = email.message_from_bytes(raw_email)
+
+        # Get the email date
+        email_date = get_email_date(email_message)
+        if not email_date:
+            print(f"Skipping email {email_id}: No valid date found.")
+            continue
+
+        # Extract year, month, week, and day
+        year = email_date.strftime("%Y")
+        month = email_date.strftime("%m")
+        week = email_date.strftime("%U")  # Week number (00-53)
+        day = email_date.strftime("%d")
+
+        # Create directory structure: year/month/week/day
+        dir_path = os.path.join(BASE_DIR, year, month, f"week_{week}", day)
+        os.makedirs(dir_path, exist_ok=True)
+
+        # Process email parts
+        for part in email_message.walk():
+            if part.get_content_maintype() == "multipart":
+                continue
+            if part.get("Content-Disposition") is None:
+                continue
+
+            filename = part.get_filename()
+            if filename:
+                # Decode the filename
+                decoded_filename = decode_header(filename)[0][0]
+                if isinstance(decoded_filename, bytes):
+                    filename = clean_text(decoded_filename)
+                else:
+                    filename = clean_text(decoded_filename)
+
+                # Check if the attachment is a PDF
+                if filename.lower().endswith(".pdf") or filename.lower().endswith("_pdf"):
+                    filepath = os.path.join(dir_path, filename)
+                    payload = part.get_payload(decode=True)
+
+                    # Ensure payload is bytes
+                    if isinstance(payload, str):
+                        payload = payload.encode("utf-8")
+
+                    with open(filepath, "wb") as f:
+                        f.write(payload)
+                    print(f"Downloaded: {filepath}")
+
+    mail.close()
+    mail.logout()
+
+if __name__ == "__main__":
+    download_pdf_attachments()
