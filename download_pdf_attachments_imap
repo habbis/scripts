@@ -56,7 +56,7 @@ def download_pdf_attachments():
                 filename = clean_text(filename)
 
                 # Check if the attachment is a PDF
-                if filename.lower().endswith(".pdf"):
+                if filename.lower().endswith(".pdf") or filename.lower().endswith("_pdf"):
                     filepath = os.path.join(ATTACHMENT_DIR, filename)
                     with open(filepath, "wb") as f:
                         f.write(part.get_payload(decode=True))
