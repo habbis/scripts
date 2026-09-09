@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+import imaplib
+import email
+from email.header import decode_header
+import os
+
+# Email credentials
+EMAIL = "your_email@example.com"
+PASSWORD = "your_password_or_app_password"
+SERVER = "imap.gmail.com"  # Replace with your email provider's IMAP server
+
+# Directory to save PDF attachments
+ATTACHMENT_DIR = "pdf_attachments"
+os.makedirs(ATTACHMENT_DIR, exist_ok=True)
+
+def clean_text(text):
+    """Decode and clean text for filenames."""
+    return "".join(
+        c if c.isalnum() else "_" for c in text
+    ).strip("_")
+
+def download_pdf_attachments():
+    # Connect to the IMAP server
+    mail = imaplib.IMAP4_SSL(SERVER)
+    mail.login(EMAIL, PASSWORD)
+    mail.select("inbox")  # Select the mailbox (e.g., "inbox")
+
+    # Search for all emails
+    status, messages = mail.search(None, "ALL")
+    if status != "OK":
+        print("No messages found!")
+        return
+
+    email_ids = messages[0].split()
+    for email_id in email_ids:
+        # Fetch the email
+        status, msg_data = mail.fetch(email_id, "(RFC822)")
+        if status != "OK":
+            continue
+
+        raw_email = msg_data[0][1]
+        email_message = email.message_from_bytes(raw_email)
+
+        # Process email parts
+        for part in email_message.walk():
+            if part.get_content_maintype() == "multipart":
+                continue
+            if part.get("Content-Disposition") is None:
+                continue
+
+            filename = part.get_filename()
+            if filename:
+                filename = decode_header(filename)[0][0]
+                if isinstance(filename, bytes):
+                    filename = filename.decode()
+                filename = clean_text(filename)
+
+                # Check if the attachment is a PDF
+                if filename.lower().endswith(".pdf"):
+                    filepath = os.path.join(ATTACHMENT_DIR, filename)
+                    with open(filepath, "wb") as f:
+                        f.write(part.get_payload(decode=True))
+                    print(f"Downloaded: {filename}")
+
+    mail.close()
+    mail.logout()
+
+if __name__ == "__main__":
+    download_pdf_attachments()
